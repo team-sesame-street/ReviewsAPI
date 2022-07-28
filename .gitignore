@@ -1,5 +1,8 @@
-#Config tokens
+#Config
 config.js
+
+#Ignore ETL files
+*.csv
 
 # Logs
 logs

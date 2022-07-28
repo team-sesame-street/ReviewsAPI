@@ -1,4 +1,4 @@
-const postgres = require('postgres');
+import postgres from 'postgres';
 const Promise = require('bluebird');
 
 const sql = postgres('postgres://username:password@host:port/database', {
