@@ -8,10 +8,16 @@ const app = express();
 app.use(express.json());
 
 app.get('/reviews', (req, res) => {
+  console.log('index', req.query)
   model.read(req.query)
   .then((response) => {
     console.log(response.rows);
-    res.status(200).send(response.rows);
+    let reviewObj = {};
+    reviewObj.product = req.query.product_id;
+    reviewObj.page = req.query.page || 0;
+    reviewObj.count = req.query.count || 5;
+    reviewObj.results = response.rows;
+    res.status(200).send(reviewObj);
   })
   .catch((err) => {
     console.log(err);
@@ -24,7 +30,7 @@ app.get('/reviews/meta', (req, res) => {
 })
 
 app.post('/reviews', (req, res) => {
-
+  console.log(req)
 })
 
 app.put('/reviews/:review_id/helpful', (req, res) => {
