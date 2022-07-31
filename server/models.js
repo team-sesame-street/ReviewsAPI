@@ -1,17 +1,18 @@
 const db = require('./postgresdb.js');
 
-let read = (query) => {
+let getReviews = (query) => {
   const page = query.page || 0;
   const count = query.count || 5;
+  const offset = count * page;
   var sort = 'r.date';
   if (query.sort === 'newest') {
-    sort = 'r.date'
+    sort = 'r.date DESC'
   };
   if (query.sort === 'helpful') {
-    sort = 'r.helpfulness'
+    sort = 'r.helpfulness DESC'
   };
   if (query.sort === 'relevant') {
-    sort = 'idk'
+    sort = 'r.date DESC, r.helpfulness DESC'
   };
   let script = `SELECT
                   r.review_id,
@@ -29,18 +30,74 @@ let read = (query) => {
                 FROM reviews r
                 LEFT JOIN reviews_photos p ON p.review_id = r.review_id
                 WHERE r.product_id = ${query.product_id}
+                AND r.reported = false
                 GROUP BY r.review_id
-                ORDER BY ${sort} DESC
-                limit ${count}`
+                ORDER BY ${sort} limit ${count}`;
+  return db.query(script);
+};
+
+let getMeta = (query) => {
+  console.log(query.product_id);
+  let script = `SELECT
+                  json_build_object(
+                    '1', COUNT(*) FILTER (WHERE r.rating = 1):: VARCHAR,
+                    '2', COUNT(*) FILTER (WHERE r.rating = 2):: VARCHAR,
+                    '3', COUNT(*) FILTER (WHERE r.rating = 3):: VARCHAR,
+                    '4', COUNT(*) FILTER (WHERE r.rating = 4):: VARCHAR,
+                    '5', COUNT(*) FILTER (WHERE r.rating = 5):: VARCHAR
+                  ) AS ratings,
+                  json_build_object(
+                    'false', COUNT(*) FILTER (WHERE r.recommend = false)::VARCHAR,
+                    'true', COUNT(*) FILTER (WHERE r.recommend = true)::VARCHAR
+                  ) AS recommended,
+                (WITH char_rev AS (
+                SELECT
+                  c.name,
+                  c.id,
+                  AVG(cr.value)
+                FROM characteristics c RIGHT JOIN characteristic_reviews cr
+                ON c.id = cr.characteristic_id
+                WHERE c.product_id = ${query.product_id}
+                GROUP BY c.id
+                ORDER BY c.id
+                )
+                SELECT json_object_agg(name, json_build_object('id', id, 'value', AVG::VARCHAR))
+                FROM char_rev) AS characteristics
+                FROM reviews r WHERE r.product_id = ${query.product_id}`;
   return db.query(script);
 }
 
-let write = (query) => {
-
+let writeReview = (body) => {
+  let entryDate = new Date().toISOString();
+  console.log(entryDate);
+  console.log(body);
+  let noPhotoScript = `WITH rev AS (INSERT INTO
+                        reviews (
+                          product_id,
+                          rating,
+                          date,
+                          summary,
+                          body,
+                          recommend,
+                          reported,
+                          reviewer_name,
+                          reviewer_email
+                        )
+                        VALUES (?,?,?,?,?,?,?,?,?) RETURNING review_id)
+                      INSERT INTO
+                        characteristic_reviews (
+                          characteristic_id,
+                          review_id,
+                          value
+                        )
+                        VALUES ((json_object_keys('?')),(SELECT review_id FROM rev),?)`
+  let noPhotoArray = [body.product_id, body.rating, body.summary, body.recommend, false, body.name, body.email, body.characteristics, 1];
+  return db.query(noPhotoScript, noPhotoArray);
 }
 
-module.exports.read = read;
-module.exports.write = write;
+module.exports.getReviews = getReviews;
+module.exports.getMeta = getMeta;
+module.exports.writeReview = writeReview;
 //prod_id 40331 = More than 10 reviews
 //prod_id 2 = More than 1 photo in review_id 5
 

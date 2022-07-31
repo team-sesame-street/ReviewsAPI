@@ -9,7 +9,7 @@ app.use(express.json());
 
 app.get('/reviews', (req, res) => {
   console.log('index', req.query)
-  model.read(req.query)
+  model.getReviews(req.query)
   .then((response) => {
     console.log(response.rows);
     let reviewObj = {};
@@ -26,11 +26,28 @@ app.get('/reviews', (req, res) => {
 })
 
 app.get('/reviews/meta', (req, res) => {
-
+  model.getMeta(req.query)
+  .then((response) => {
+    console.log(response.rows);
+    res.status(200).send(response.rows);
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(400).send(err);
+  })
 })
 
 app.post('/reviews', (req, res) => {
-  console.log(req)
+  console.log(req.body)
+  model.writeReview(req.body)
+  .then((response) => {
+    console.log(response);
+    res.status(201).send();
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(400).send(err);
+  })
 })
 
 app.put('/reviews/:review_id/helpful', (req, res) => {
