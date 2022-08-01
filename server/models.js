@@ -68,71 +68,6 @@ let getMeta = (query) => {
   return db.query(script);
 }
 
-let writeReview = (body) => {
-  let entryDate = new Date().getTime();
-  // console.log(entryDate);
-  // console.log(body);
-  let noPhotoScript = `INSERT INTO reviews (
-                          product_id,
-                          rating,
-                          date,
-                          summary,
-                          body,
-                          recommend,
-                          reported,
-                          reviewer_name,
-                          reviewer_email
-                        )
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING review_id`;
-  let photoScript = `WITH rev AS (
-                      INSERT INTO reviews (
-                        product_id,
-                        rating,
-                        date,
-                        summary,
-                        body,
-                        recommend,
-                        reported,
-                        reviewer_name,
-                        reviewer_email
-                      )
-                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                      RETURNING review_id
-                      )
-                      INSERT INTO reviews_photos (
-                        review_id,
-                        url
-                      )
-                      VALUES ((SELECT review_id FROM rev), UNNEST(CAST($10 AS TEXT[])))
-                      RETURNING review_id`;
-  let noPhotoArray = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email];
-  let photoArray = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email, body.photos];
-  if (body.photos) {
-    return db.query(photoScript, photoArray);
-  } else {
-    return db.query(noPhotoScript, noPhotoArray);
-  };
-};
-
-let writeCharReview = (charObj, reviewID) => {
-  // console.log(charObj, reviewID);
-  let script = `INSERT INTO characteristic_reviews (
-                  characteristic_id,
-                  review_id,
-                  value)
-                  VALUES ($1, $2, $3)`;
-  for (key in charObj) {
-    let valueArray = [key, reviewID, charObj[key]];
-    db.query(script, valueArray)
-    .then((response) => {
-      console.log(response);
-    })
-    .catch((err) => {
-      console.log(err);
-    })
-  }
-}
-
 let updateHelp = (params) => {
   let script = `UPDATE reviews
                 SET helpfulness = helpfulness + 1
@@ -147,10 +82,46 @@ let updateReport = (params) => {
   return db.query(script);
 }
 
+let writeReview = (body) => {
+  let entryDate = new Date().getTime();
+  let script = `WITH rev AS (
+                INSERT INTO reviews (
+                  product_id,
+                  rating,
+                  date,
+                  summary,
+                  body,
+                  recommend,
+                  reported,
+                  reviewer_name,
+                  reviewer_email
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                RETURNING review_id
+                ), chars AS (
+                  SELECT * FROM json_each_text($10)
+                ), char_rev AS (
+                INSERT INTO characteristic_reviews (
+                  characteristic_id,
+                  review_id,
+                  value
+                )
+                SELECT chars.key::INTEGER, rev.review_id, chars.value::INTEGER
+                FROM chars, rev
+                RETURNING review_id)
+                INSERT INTO reviews_photos (
+                  review_id,
+                  url
+                )
+                VALUES ((SELECT review_id FROM rev), UNNEST(CAST($11 AS TEXT[])))
+                RETURNING review_id`;
+  let array = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email, body.characteristics, body.photos];
+  return db.query(script, array);
+};
+
 module.exports.getReviews = getReviews;
 module.exports.getMeta = getMeta;
 module.exports.writeReview = writeReview;
-module.exports.writeCharReview = writeCharReview;
 module.exports.updateHelp = updateHelp;
 module.exports.updateReport = updateReport;
 //prod_id 40331 = More than 10 reviews
@@ -158,8 +129,76 @@ module.exports.updateReport = updateReport;
 
 //ORDER BY
 
-// let noPhotoScript = `WITH rev AS (INSERT INTO
-//   reviews (
+// module.exports.writeReviewV2 = writeReviewV2;
+// module.exports.writeCharReview = writeCharReview;
+
+// let writeReview = (body) => {
+//   let entryDate = new Date().getTime();
+//   // console.log(entryDate);
+//   // console.log(body);
+//   let noPhotoScript = `INSERT INTO reviews (
+//                           product_id,
+//                           rating,
+//                           date,
+//                           summary,
+//                           body,
+//                           recommend,
+//                           reported,
+//                           reviewer_name,
+//                           reviewer_email
+//                         )
+//                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING review_id`;
+//   let photoScript = `WITH rev AS (
+//                       INSERT INTO reviews (
+//                         product_id,
+//                         rating,
+//                         date,
+//                         summary,
+//                         body,
+//                         recommend,
+//                         reported,
+//                         reviewer_name,
+//                         reviewer_email
+//                       )
+//                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+//                       RETURNING review_id
+//                       )
+//                       INSERT INTO reviews_photos (
+//                         review_id,
+//                         url
+//                       )
+//                       VALUES ((SELECT review_id FROM rev), UNNEST(CAST($10 AS TEXT[])))
+//                       RETURNING review_id`;
+//   let noPhotoArray = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email];
+//   let photoArray = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email, body.photos];
+//   if (body.photos) {
+//     return db.query(photoScript, photoArray);
+//   } else {
+//     return db.query(noPhotoScript, noPhotoArray);
+//   };
+// };
+
+// let writeCharReview = (charObj, reviewID) => {
+//   // console.log(charObj, reviewID);
+//   let script = `INSERT INTO characteristic_reviews (
+//                   characteristic_id,
+//                   review_id,
+//                   value)
+//                   VALUES ($1, $2, $3)`;
+//   for (key in charObj) {
+//     let valueArray = [key, reviewID, charObj[key]];
+//     db.query(script, valueArray)
+//     .then((response) => {
+//       console.log(response);
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//     })
+//   }
+// }
+
+// let script = `WITH rev AS (
+//   INSERT INTO reviews (
 //     product_id,
 //     rating,
 //     date,
@@ -170,11 +209,24 @@ module.exports.updateReport = updateReport;
 //     reviewer_name,
 //     reviewer_email
 //   )
-//   VALUES (?,?,?,?,?,?,?,?,?) RETURNING review_id)
-// INSERT INTO
-//   characteristic_reviews (
+//   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+//   RETURNING review_id
+//   ), chars AS (
+//     SELECT * FROM json_each_text($10)
+//   )
+//   INSERT INTO characteristic_reviews (
 //     characteristic_id,
 //     review_id,
 //     value
 //   )
-//   VALUES ((json_object_keys('?')),(SELECT review_id FROM rev),?)`
+//   SELECT chars.key::INTEGER, rev.review_id, chars.value::INTEGER
+//   FROM chars, rev
+//   RETURNING review_id`;
+
+//   let array = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email, body.characteristics];
+
+  // if (body.photos) {
+  //   return db.query(photoScript, photoArray);
+  // } else {
+  //   return db.query(script, array);
+  // }
