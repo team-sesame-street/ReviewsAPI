@@ -38,14 +38,14 @@ app.get('/reviews/meta', (req, res) => {
 })
 
 app.post('/reviews', (req, res) => {
-  console.log(req.body)
   model.writeReview(req.body)
   .then((response) => {
-    console.log(response);
+    // console.log(response.rows[0].review_id);
+    model.writeCharReview(req.body.characteristics, response.rows[0].review_id);
     res.status(201).send(response);
   })
   .catch((err) => {
-    console.log(err);
+    console.log('review err', err);
     res.status(400).send(err);
   })
 })
