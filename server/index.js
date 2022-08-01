@@ -42,7 +42,7 @@ app.post('/reviews', (req, res) => {
   model.writeReview(req.body)
   .then((response) => {
     console.log(response);
-    res.status(201).send();
+    res.status(201).send(response);
   })
   .catch((err) => {
     console.log(err);
@@ -51,11 +51,28 @@ app.post('/reviews', (req, res) => {
 })
 
 app.put('/reviews/:review_id/helpful', (req, res) => {
-
+  console.log(req.params)
+  model.updateHelp(req.params)
+  .then((response) => {
+    console.log(response);
+    res.status(201).send(response);
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(400).send(err);
+  })
 })
 
 app.put('/reviews/:review_id/report', (req, res) => {
-
+  model.updateReport(req.params)
+  .then((response) => {
+    console.log(response);
+    res.status(201).send(response);
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(400).send(err);
+  })
 })
 
 var port = process.env.PORT || 3000;

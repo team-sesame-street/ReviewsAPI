@@ -32,7 +32,8 @@ let getReviews = (query) => {
                 WHERE r.product_id = ${query.product_id}
                 AND r.reported = false
                 GROUP BY r.review_id
-                ORDER BY ${sort} limit ${count}`;
+                ORDER BY ${sort}
+                LIMIT ${count} OFFSET ${offset}`;
   return db.query(script);
 };
 
@@ -68,11 +69,10 @@ let getMeta = (query) => {
 }
 
 let writeReview = (body) => {
-  let entryDate = new Date().toISOString();
+  let entryDate = new Date().getTime();
   console.log(entryDate);
   console.log(body);
-  let noPhotoScript = `WITH rev AS (INSERT INTO
-                        reviews (
+  let noPhotoScript = `INSERT INTO reviews (
                           product_id,
                           rating,
                           date,
@@ -83,22 +83,52 @@ let writeReview = (body) => {
                           reviewer_name,
                           reviewer_email
                         )
-                        VALUES (?,?,?,?,?,?,?,?,?) RETURNING review_id)
-                      INSERT INTO
-                        characteristic_reviews (
-                          characteristic_id,
-                          review_id,
-                          value
-                        )
-                        VALUES ((json_object_keys('?')),(SELECT review_id FROM rev),?)`
-  let noPhotoArray = [body.product_id, body.rating, body.summary, body.recommend, false, body.name, body.email, body.characteristics, 1];
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+  let noPhotoArray = [body.product_id, body.rating, entryDate, body.summary, body.body, body.recommend, false, body.name, body.email];
   return db.query(noPhotoScript, noPhotoArray);
+}
+
+let updateHelp = (params) => {
+  let script = `UPDATE reviews
+                SET helpfulness = helpfulness + 1
+                WHERE review_id = ${params.review_id}`;
+  return db.query(script);
+}
+
+let updateReport = (params) => {
+  let script = `UPDATE reviews
+                SET reported = true
+                WHERE review_id = ${params.review_id}`;
+  return db.query(script);
 }
 
 module.exports.getReviews = getReviews;
 module.exports.getMeta = getMeta;
 module.exports.writeReview = writeReview;
+module.exports.updateHelp = updateHelp;
+module.exports.updateReport = updateReport;
 //prod_id 40331 = More than 10 reviews
 //prod_id 2 = More than 1 photo in review_id 5
 
 //ORDER BY
+
+// let noPhotoScript = `WITH rev AS (INSERT INTO
+//   reviews (
+//     product_id,
+//     rating,
+//     date,
+//     summary,
+//     body,
+//     recommend,
+//     reported,
+//     reviewer_name,
+//     reviewer_email
+//   )
+//   VALUES (?,?,?,?,?,?,?,?,?) RETURNING review_id)
+// INSERT INTO
+//   characteristic_reviews (
+//     characteristic_id,
+//     review_id,
+//     value
+//   )
+//   VALUES ((json_object_keys('?')),(SELECT review_id FROM rev),?)`

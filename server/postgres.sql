@@ -53,3 +53,9 @@ CREATE TABLE IF NOT EXISTS characteristic_reviews (
 \copy reviews_photos FROM 'etl_files/reviews_photos.csv' DELIMITER ',' CSV HEADER;
 \copy characteristics FROM 'etl_files/characteristics.csv' DELIMITER ',' CSV HEADER;
 \copy characteristic_reviews FROM 'etl_files/characteristic_reviews.csv' DELIMITER ',' CSV HEADER;
+
+SELECT setval('product_id_seq', max(id)) FROM product;
+SELECT setval('reviews_review_id_seq', max(review_id)) FROM reviews;
+SELECT setval('reviews_photos_id_seq', max(id)) FROM reviews_photos;
+SELECT setval('characteristics_id_seq', max(id)) FROM characteristics;
+SELECT setval('characteristic_reviews_id_seq', max(id)) FROM characteristic_reviews;
