@@ -28,8 +28,8 @@ app.get('/reviews', (req, res) => {
 app.get('/reviews/meta', (req, res) => {
   model.getMeta(req.query)
   .then((response) => {
-    console.log(response.rows);
-    res.status(200).send(response.rows);
+    console.log(response.rows[0]);
+    res.status(200).send(response.rows[0]);
   })
   .catch((err) => {
     console.log(err);
@@ -54,7 +54,7 @@ app.put('/reviews/:review_id/helpful', (req, res) => {
   model.updateHelp(req.params)
   .then((response) => {
     console.log(response);
-    res.status(201).send(response);
+    res.status(204).send(response);
   })
   .catch((err) => {
     console.log(err);
@@ -66,7 +66,7 @@ app.put('/reviews/:review_id/report', (req, res) => {
   model.updateReport(req.params)
   .then((response) => {
     console.log(response);
-    res.status(201).send(response);
+    res.status(204).send(response);
   })
   .catch((err) => {
     console.log(err);
