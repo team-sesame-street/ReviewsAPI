@@ -1,7 +1,7 @@
 const db = require('./postgresdb.js');
 
 let getReviews = (query) => {
-  const page = query.page || 0;
+  const page = query.page - 1 || 0;
   const count = query.count || 5;
   const offset = count * page;
   var sort = 'r.date';

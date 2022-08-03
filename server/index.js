@@ -14,7 +14,7 @@ app.get('/reviews', (req, res) => {
     console.log(response.rows);
     let reviewObj = {};
     reviewObj.product = req.query.product_id;
-    reviewObj.page = req.query.page || 0;
+    reviewObj.page = req.query.page || 1;
     reviewObj.count = req.query.count || 5;
     reviewObj.results = response.rows;
     res.status(200).send(reviewObj);
