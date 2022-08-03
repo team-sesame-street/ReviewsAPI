@@ -34,7 +34,26 @@ let getReviews = (query) => {
                 GROUP BY r.review_id
                 ORDER BY ${sort}
                 LIMIT ${count} OFFSET ${offset}`;
-  return db.query(script);
+  let script2 = `SELECT
+                r.review_id,
+                r.product_id,
+                r.rating,
+                r.summary,
+                r.recommend,
+                r.response,
+                r.body,
+                r.date,
+                r.reviewer_name,
+                r.helpfulness,
+                (SELECT coalesce(json_agg(json_build_object('id', p.id, 'url', p.url)), '[]')
+                FROM reviews_photos p
+                WHERE p.review_id = r.review_id) AS photo
+                FROM reviews r
+                WHERE r.product_id = ${query.product_id}
+                AND r.reported = false
+                ORDER BY ${sort}
+                LIMIT ${count} OFFSET ${offset}`;
+  return db.query(script2);
 };
 
 let getMeta = (query) => {
