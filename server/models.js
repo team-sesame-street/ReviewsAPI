@@ -15,26 +15,6 @@ let getReviews = (query) => {
     sort = 'r.date DESC, r.helpfulness DESC'
   };
   let script = `SELECT
-                  r.review_id,
-                  r.product_id,
-                  r.rating,
-                  r.summary,
-                  r.recommend,
-                  r.response,
-                  r.body,
-                  r.date,
-                  r.reviewer_name,
-                  r.helpfulness,
-                  coalesce(json_agg(json_build_object('id', p.id, 'url', p.url))
-                  FILTER (WHERE p.id IS NOT NULL), '[]') AS photo
-                FROM reviews r
-                LEFT JOIN reviews_photos p ON p.review_id = r.review_id
-                WHERE r.product_id = ${query.product_id}
-                AND r.reported = false
-                GROUP BY r.review_id
-                ORDER BY ${sort}
-                LIMIT ${count} OFFSET ${offset}`;
-  let script2 = `SELECT
                 r.review_id,
                 r.product_id,
                 r.rating,
@@ -47,13 +27,13 @@ let getReviews = (query) => {
                 r.helpfulness,
                 (SELECT coalesce(json_agg(json_build_object('id', p.id, 'url', p.url)), '[]')
                 FROM reviews_photos p
-                WHERE p.review_id = r.review_id) AS photo
+                WHERE p.review_id = r.review_id) AS photos
                 FROM reviews r
                 WHERE r.product_id = ${query.product_id}
                 AND r.reported = false
                 ORDER BY ${sort}
                 LIMIT ${count} OFFSET ${offset}`;
-  return db.query(script2);
+  return db.query(script);
 };
 
 let getMeta = (query) => {
@@ -249,3 +229,24 @@ module.exports.updateReport = updateReport;
   // } else {
   //   return db.query(script, array);
   // }
+
+  // let script = `SELECT
+  //                 r.review_id,
+  //                 r.product_id,
+  //                 r.rating,
+  //                 r.summary,
+  //                 r.recommend,
+  //                 r.response,
+  //                 r.body,
+  //                 r.date,
+  //                 r.reviewer_name,
+  //                 r.helpfulness,
+  //                 coalesce(json_agg(json_build_object('id', p.id, 'url', p.url))
+  //                 FILTER (WHERE p.id IS NOT NULL), '[]') AS photo
+  //               FROM reviews r
+  //               LEFT JOIN reviews_photos p ON p.review_id = r.review_id
+  //               WHERE r.product_id = ${query.product_id}
+  //               AND r.reported = false
+  //               GROUP BY r.review_id
+  //               ORDER BY ${sort}
+  //               LIMIT ${count} OFFSET ${offset}`;
