@@ -60,6 +60,10 @@ SELECT setval('reviews_photos_id_seq', max(id)) FROM reviews_photos;
 SELECT setval('characteristics_id_seq', max(id)) FROM characteristics;
 SELECT setval('characteristic_reviews_id_seq', max(id)) FROM characteristic_reviews;
 
+UPDATE reviews SET date = date / 1000;
+ALTER TABLE reviews ALTER date TYPE timestamp without time zone USING (to_timestamp(date) AT TIME ZONE 'UTC');
+
+
 CREATE INDEX ON reviews (product_id);
 CREATE INDEX ON reviews_photos (review_id);
 CREATE INDEX ON characteristics (product_id);

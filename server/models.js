@@ -102,7 +102,7 @@ let updateReport = (params) => {
 }
 
 let writeReview = (body) => {
-  let entryDate = new Date().getTime();
+  let entryDate = new Date().toISOString();
   let script = `WITH rev AS (
                 INSERT INTO reviews (
                   product_id,
