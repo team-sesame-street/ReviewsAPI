@@ -10,7 +10,7 @@
 <h4 align="center">A Ratings and Reviews microservice API created to replace a legacy service.</h4>
 
 ## Mission
-Given a front end web application for retail from a client that was built on a monolithic, service architecture, my team and I were tasked with revamping the legacy service into microservices to scale and support increased traffic. This is the repo specific to the Ratings and Reviews service.
+Given a front end web application for retail from a client that was built on a monolithic, service architecture, my team and I were tasked with revamping the legacy service into microservices to scale and support increased traffic. This repo is specific to the Ratings and Reviews service.
 
 ## Features
 - PostgresDB
